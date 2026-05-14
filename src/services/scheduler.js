@@ -75,27 +75,28 @@ class Scheduler {
   }
 
   async _runTask(task) {
+    const config = _normalizeConfig(task.config);
     switch (task.type) {
       case 'warm_group':
-        await this._warmGroup(task.config);
+        await this._warmGroup(config);
         break;
       case 'warm_pair':
-        await this._warmPair(task.config);
+        await this._warmPair(config);
         break;
       case 'send_audio':
-        await this._sendAudioToGroup(task.config);
+        await this._sendAudioToGroup(config);
         break;
       case 'send_sticker':
-        await this._sendStickerToGroup(task.config);
+        await this._sendStickerToGroup(config);
         break;
       case 'send_reaction':
-        await this._sendReactionInGroup(task.config);
+        await this._sendReactionInGroup(config);
         break;
       case 'send_image':
-        await this._sendImageToGroup(task.config);
+        await this._sendImageToGroup(config);
         break;
       case 'send_video':
-        await this._sendVideoToGroup(task.config);
+        await this._sendVideoToGroup(config);
         break;
       default:
         console.warn(`[Scheduler] Unknown task type: ${task.type}`);
@@ -406,6 +407,30 @@ class Scheduler {
     await this._runTask(task);
     await db.updateTaskLastRun(id);
   }
+}
+
+/**
+ * Normaliza um objeto config que pode vir em snake_case ou camelCase.
+ * Ex.: group_id → groupId, messages_per_cycle → messagesPerCycle
+ */
+function _normalizeConfig(config) {
+  if (!config || typeof config !== 'object') return config;
+  const map = {
+    group_id:          'groupId',
+    messages_per_cycle:'messagesPerCycle',
+    from_id:           'fromId',
+    to_id:             'toId',
+    audio_id:          'audioId',
+    sticker_id:        'stickerId',
+    image_id:          'imageId',
+    video_id:          'videoId',
+  };
+  const out = {};
+  for (const [k, v] of Object.entries(config)) {
+    const camel = map[k] ?? k;
+    out[camel] = v;
+  }
+  return out;
 }
 
 function _randomItem(arr) {
