@@ -35,7 +35,7 @@ const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
 
 const corsOptions = {
   origin(origin, callback) {
-    // Permite chamadas server-to-server (sem Origin) e origens explicitamente autorizadas
+    //server-to-server (sem Origin) e origens explicitamente autorizadas
     if (!origin || ALLOWED_ORIGINS.includes(origin)) {
       return callback(null, true);
     }
