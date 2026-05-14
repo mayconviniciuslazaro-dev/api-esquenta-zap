@@ -142,6 +142,7 @@ class DatabaseService {
   }
 
   async getGroupById(id) {
+    if (!id) throw new Error(`getGroupById: id inválido (${id})`);
     return this.#prisma.group.findUnique({
       where: { id },
       include: { members: { include: { number: true } } },

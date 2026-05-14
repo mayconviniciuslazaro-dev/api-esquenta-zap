@@ -107,6 +107,7 @@ class Scheduler {
    */
   async _warmGroup(config) {
     const { groupId, messagesPerCycle = 3 } = config;
+    if (!groupId) throw new Error('Configuração inválida: groupId não definido para warm_group');
     const group = await db.getGroupById(groupId);
     if (!group || group.members.length < 2) return;
 
@@ -191,6 +192,7 @@ class Scheduler {
    */
   async _sendAudioToGroup(config) {
     const { groupId, audioId } = config;
+    if (!groupId) throw new Error('Configuração inválida: groupId não definido para send_audio');
     const group = await db.getGroupById(groupId);
     if (!group || group.members.length < 2) return;
 
@@ -227,6 +229,7 @@ class Scheduler {
    */
   async _sendStickerToGroup(config) {
     const { groupId, stickerId } = config;
+    if (!groupId) throw new Error('Configuração inválida: groupId não definido para send_sticker');
     const group = await db.getGroupById(groupId);
     if (!group || group.members.length < 2) return;
 
@@ -263,6 +266,7 @@ class Scheduler {
    */
   async _sendReactionInGroup(config) {
     const { groupId } = config;
+    if (!groupId) throw new Error('Configuração inválida: groupId não definido para send_reaction');
     const group = await db.getGroupById(groupId);
     if (!group || group.members.length < 2) return;
 
@@ -296,6 +300,7 @@ class Scheduler {
    */
   async _sendImageToGroup(config) {
     const { groupId, imageId, caption = '' } = config;
+    if (!groupId) throw new Error('Configuração inválida: groupId não definido para send_image');
     const group = await db.getGroupById(groupId);
     if (!group || group.members.length < 2) return;
 
@@ -332,6 +337,7 @@ class Scheduler {
    */
   async _sendVideoToGroup(config) {
     const { groupId, videoId, caption = '' } = config;
+    if (!groupId) throw new Error('Configuração inválida: groupId não definido para send_video');
     const group = await db.getGroupById(groupId);
     if (!group || group.members.length < 2) return;
 
