@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Engine {
+  baileys
+}
+
+enum NumberStatus {
+  disconnected
+  connecting
+  qr_pending
+  authenticated
+  connected
+  auth_failure
+}
+
+enum MediaType {
+  audio
+  sticker
+  image
+  video
+}
+
+enum TaskType {
+  warm_group
+  warm_pair
+  send_audio
+  send_sticker
+  send_reaction
+  send_image
+  send_video
+}
+
+model Number {
+  id            String       @id @default(uuid())
+  name          String?
+  phone         String?
+  engine        Engine       @default(baileys)
+  status        NumberStatus @default(disconnected)
+  autoReconnect Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  lastConnected DateTime?
+  lastActivity  DateTime?
+  userId        String?
+  user          User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  groupMembers GroupMember[]
+  sentLogs     ConversationLog[] @relation("SentLogs")
+  receivedLogs ConversationLog[] @relation("ReceivedLogs")
+
+  @@map("numbers")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  role      String   @default("user")
+  enabled   Boolean  @default(true)
+  modules   String   @default("numbers,groups,scheduler,media,logs,settings")
+  machineId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+
+  numbers    Number[]
+  groups     Group[]
+  tasks      ScheduledTask[]
+  mediaFiles MediaFile[]
+
+  @@map("users")
+}
+
+model Group {
+  id              String   @id @default(uuid())
+  name            String
+  whatsappGroupId String?
+  creatorNumberId String?
+  createdAt       DateTime @default(now())
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  members GroupMember[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  groupId  String
+  numberId String
+
+  group  Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  number Number @relation(fields: [numberId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, numberId])
+  @@map("group_members")
+}
+
+model ConversationLog {
+  id           Int      @id @default(autoincrement())
+  fromNumberId String?
+  toNumberId   String?
+  message      String
+  type         String   @default("text")
+  sentAt       DateTime @default(now())
+
+  fromNumber Number? @relation("SentLogs", fields: [fromNumberId], references: [id], onDelete: SetNull)
+  toNumber   Number? @relation("ReceivedLogs", fields: [toNumberId], references: [id], onDelete: SetNull)
+
+  @@map("conversation_logs")
+}
+
+model ScheduledTask {
+  id             String    @id @default(uuid())
+  name           String
+  type           TaskType
+  cronExpression String
+  enabled        Boolean   @default(true)
+  config         Json      @default("{}")
+  lastRun        DateTime?
+  createdAt      DateTime  @default(now())
+  userId         String?
+  user           User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("scheduled_tasks")
+}
+
+model Setting {
+  key   String @id
+  value String
+
+  @@map("settings")
+}
+
+model MediaFile {
+  id        String    @id @default(uuid())
+  name      String
+  type      MediaType
+  filename  String
+  createdAt DateTime  @default(now())
+  userId    String?
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("media_files")
+}
