@@ -20,9 +20,30 @@ const mediaRouter = require('./routes/media');
 const app = express();
 const server = http.createServer(app);
 
+const DEFAULT_ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'https://esquenta-zap.vercel.app',
+];
+
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:3000', 'http://127.0.0.1:3000'];
+  ? process.env.ALLOWED_ORIGINS
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean)
+  : DEFAULT_ALLOWED_ORIGINS;
+
+const corsOptions = {
+  origin(origin, callback) {
+    // Permite chamadas server-to-server (sem Origin) e origens explicitamente autorizadas
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS bloqueado para origem: ${origin}`));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
+};
 
 const io = new Server(server, {
   cors: {
@@ -31,7 +52,8 @@ const io = new Server(server, {
   },
 });
 
-app.use(cors({ origin: ALLOWED_ORIGINS }));
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use('/uploads/audios',    express.static(path.join(__dirname, '../audios')));
 app.use('/uploads/stickers',  express.static(path.join(__dirname, '../stickers')));
